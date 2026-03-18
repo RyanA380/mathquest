@@ -221,20 +221,22 @@ function checkFillin(correct, explanation) {
 /* ── Drag to order ────────────────────── */
 function renderDrag(q, area) {
   const shuffled = [...q.tiles].sort(() => Math.random() - 0.5);
+  window.currentDragAnswer = q.correctOrder;
+  window.currentDragExplanation = q.explanation;
 
   area.innerHTML = `
-    <div class="duo-question" style="padding-bottom: 100px;">
+    <div class="duo-question">
       <div class="duo-label">Drag to put the steps in order</div>
       <div class="duo-equation">${q.equation}</div>
       <div class="drag-list" id="dragList">
         ${shuffled.map((tile, i) => `
-          <div class="drag-tile" draggable="true" data-index="${i}" data-text="${tile}">
+          <div class="drag-tile" draggable="true" data-text="${tile}">
             <span class="drag-handle">☰</span> ${tile}
           </div>
         `).join('')}
       </div>
       <br>
-      <button class="btn-check" id="checkBtn" style="position: relative; z-index: 10;" onclick="checkDrag(${JSON.stringify(q.correctOrder)}, '${q.explanation}')">Check ✅</button>
+      <button class="btn-check" id="checkBtn" onclick="checkDrag()">Check ✅</button>
     </div>
   `;
 
@@ -272,18 +274,20 @@ function getDragAfter(container, y) {
   }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
-function checkDrag(correctOrder, explanation) {
+function checkDrag() {
+  const correct = window.currentDragAnswer;
+  const explanation = window.currentDragExplanation;
   const tiles = [...document.querySelectorAll('.drag-tile')];
   const userOrder = tiles.map(t => t.dataset.text);
-  const correct = JSON.stringify(userOrder) === JSON.stringify(correctOrder);
+  const isCorrect = JSON.stringify(userOrder) === JSON.stringify(correct);
 
   tiles.forEach((t, i) => {
-    t.classList.add(t.dataset.text === correctOrder[i] ? 'correct' : 'wrong');
+    t.classList.add(t.dataset.text === correct[i] ? 'correct' : 'wrong');
   });
 
-  document.querySelector('.btn-check').disabled = true;
+  document.getElementById('checkBtn').disabled = true;
 
-  if (correct) {
+  if (isCorrect) {
     score++;
     showFeedback(true, explanation);
   } else {
