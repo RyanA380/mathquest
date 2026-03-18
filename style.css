@@ -237,17 +237,18 @@ body {
 
 /* ── Feedback bar ─────────────────────── */
 .feedback-bar {
-  position: relative;
   margin-top: 20px;
-  padding: 20px 28px;
+  padding: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-radius: 0 0 24px 24px;
-  animation: slideUp .3s ease both;
+  border-radius: 14px;
+  animation: fadeUp .3s ease both;
   flex-wrap: wrap;
 }
+.fb-correct { background:#22c55e18; border: 2px solid var(--green); }
+.fb-wrong   { background:#f8717118; border: 2px solid var(--red); }
 .fb-correct { background:#22c55e18; border-top:2px solid var(--green); }
 .fb-wrong   { background:#f8717118; border-top:2px solid var(--red);   }
 
