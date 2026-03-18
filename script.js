@@ -189,7 +189,7 @@ function renderFillin(q, area) {
       <div class="duo-label">Fill in the blank</div>
       <div class="duo-equation">${q.equation}</div>
       <input id="fillInput" class="fill-input" type="number" placeholder="Type your answer...">
-      <button class="btn-check" onclick="checkFillin('${q.answer}', '${q.explanation}')">Check ✅</button>
+      <button class="btn-check" id="checkBtn" onclick="checkDrag(${JSON.stringify(q.correctOrder)}, '${q.explanation}')">Check ✅</button>
     </div>
   `;
   document.getElementById('fillInput').focus();
@@ -367,4 +367,3 @@ function showResult() {
 renderHome();
 
 renderHome();
-
