@@ -223,7 +223,7 @@ function renderDrag(q, area) {
   const shuffled = [...q.tiles].sort(() => Math.random() - 0.5);
 
   area.innerHTML = `
-    <div class="duo-question">
+    <div class="duo-question" style="padding-bottom: 100px;">
       <div class="duo-label">Drag to put the steps in order</div>
       <div class="duo-equation">${q.equation}</div>
       <div class="drag-list" id="dragList">
@@ -233,13 +233,13 @@ function renderDrag(q, area) {
           </div>
         `).join('')}
       </div>
-      <button class="btn-check" onclick="checkDrag(${JSON.stringify(q.correctOrder)}, '${q.explanation}')">Check ✅</button>
+      <br>
+      <button class="btn-check" id="checkBtn" style="position: relative; z-index: 10;" onclick="checkDrag(${JSON.stringify(q.correctOrder)}, '${q.explanation}')">Check ✅</button>
     </div>
   `;
 
   initDrag();
 }
-
 function initDrag() {
   const list = document.getElementById('dragList');
   let dragging = null;
