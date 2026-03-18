@@ -294,10 +294,12 @@ function checkDrag(correctOrder, explanation) {
 
 /* ── Feedback bar ─────────────────────── */
 function showFeedback(correct, explanation) {
-  const existing = document.querySelector('.feedback-bar');
+  const area = document.getElementById('questionArea');
+  const existing = document.getElementById('feedbackBar');
   if (existing) existing.remove();
 
   const bar = document.createElement('div');
+  bar.id = 'feedbackBar';
   bar.className = `feedback-bar ${correct ? 'fb-correct' : 'fb-wrong'}`;
   bar.innerHTML = `
     <div class="fb-left">
@@ -311,9 +313,9 @@ function showFeedback(correct, explanation) {
       ${questionIndex + 1 >= algebraQuestions.length ? 'Finish 🏁' : 'Continue →'}
     </button>
   `;
-  document.querySelector('.card').appendChild(bar);
+  area.appendChild(bar);
+  bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
-
 function nextQuestion() {
   questionIndex++;
   document.querySelector('.feedback-bar')?.remove();
