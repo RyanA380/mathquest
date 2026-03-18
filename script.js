@@ -57,4 +57,98 @@ function showAlgebra()  { alert('Realm 1 — next session!'); }
 function showGeometry() { alert('Realm 2 — next session!'); }
 function showFractions(){ alert('Realm 3 — next session!'); }
 
+/* ── Realm 1: Algebra ─────────────────── */
+function showAlgebra() {
+  score = 0;
+  questionIndex = 0;
+  hearts = 3;
+
+  document.getElementById('app').innerHTML = `
+    <div class="card realm-page">
+
+      <div class="duo-topbar">
+        <button class="btn-back" onclick="renderHome()">✕</button>
+        <div class="duo-progress-wrap">
+          <div class="duo-progress-bg">
+            <div class="duo-progress-fill" id="progressFill" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="duo-hearts" id="heartsDisplay">❤️❤️❤️</div>
+      </div>
+
+      <div id="questionArea"></div>
+
+    </div>
+  `;
+
+  loadQuestion();
+}
+/* ── Questions ────────────────────────── */
+const algebraQuestions = [
+  {
+    type: 'mcq',
+    question: 'Solve for x',
+    equation: '2x + 3 = 11',
+    options: ['x = 3', 'x = 4', 'x = 5', 'x = 7'],
+    answer: 'x = 4',
+    explanation: '2x = 11 − 3 = 8, so x = 4'
+  },
+  {
+    type: 'drag',
+    question: 'Arrange the steps to solve:',
+    equation: '3x = 15',
+    tiles: ['x = 5', 'Divide both sides by 3', '3x = 15', 'x = 15 ÷ 3'],
+    correctOrder: ['3x = 15', 'Divide both sides by 3', 'x = 15 ÷ 3', 'x = 5'],
+    explanation: 'Divide both sides by 3 to isolate x'
+  },
+  {
+    type: 'fillin',
+    question: 'Fill in the blank',
+    equation: 'x ÷ 4 = 9, so x = ___',
+    answer: '36',
+    explanation: 'Multiply both sides by 4: x = 9 × 4 = 36'
+  },
+  {
+    type: 'mcq',
+    question: 'Solve for x',
+    equation: '5x − 10 = 20',
+    options: ['x = 4', 'x = 5', 'x = 6', 'x = 8'],
+    answer: 'x = 6',
+    explanation: '5x = 20 + 10 = 30, so x = 6'
+  },
+  {
+    type: 'drag',
+    question: 'Arrange the steps to solve:',
+    equation: '2x + 6 = 14',
+    tiles: ['x = 4', '2x = 8', 'Subtract 6 from both sides', '2x + 6 = 14'],
+    correctOrder: ['2x + 6 = 14', 'Subtract 6 from both sides', '2x = 8', 'x = 4'],
+    explanation: 'First subtract 6, then divide by 2'
+  },
+  {
+    type: 'fillin',
+    question: 'Fill in the blank',
+    equation: '3x + 7 = 22, so x = ___',
+    answer: '5',
+    explanation: '3x = 22 − 7 = 15, so x = 15 ÷ 3 = 5'
+  }
+];
+
+function loadQuestion() {
+  if (questionIndex >= algebraQuestions.length) {
+    showResult();
+    return;
+  }
+
+  const q = algebraQuestions[questionIndex];
+  const pct = (questionIndex / algebraQuestions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  const area = document.getElementById('questionArea');
+
+  if (q.type === 'mcq')    renderMCQ(q, area);
+  if (q.type === 'fillin') renderFillin(q, area);
+  if (q.type === 'drag')   renderDrag(q, area);
+}
+
+
 renderHome();
