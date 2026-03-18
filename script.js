@@ -149,6 +149,222 @@ function loadQuestion() {
   if (q.type === 'fillin') renderFillin(q, area);
   if (q.type === 'drag')   renderDrag(q, area);
 }
+/* ── MCQ ──────────────────────────────── */
+function renderMCQ(q, area) {
+  area.innerHTML = `
+    <div class="duo-question">
+      <div class="duo-label">Choose the correct answer</div>
+      <div class="duo-equation">${q.equation}</div>
+      <div class="mcq-grid">
+        ${q.options.map(opt => `
+          <button class="mcq-tile" onclick="checkMCQ(this, '${opt}', '${q.answer}', '${q.explanation}')">
+            ${opt}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
 
+function checkMCQ(btn, selected, correct, explanation) {
+  const allBtns = document.querySelectorAll('.mcq-tile');
+  allBtns.forEach(b => b.disabled = true);
+
+  if (selected === correct) {
+    btn.classList.add('correct');
+    score++;
+    showFeedback(true, explanation);
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach(b => { if (b.textContent.trim() === correct) b.classList.add('correct'); });
+    loseHeart();
+    showFeedback(false, explanation);
+  }
+}
+
+/* ── Fill in the blank ────────────────── */
+function renderFillin(q, area) {
+  area.innerHTML = `
+    <div class="duo-question">
+      <div class="duo-label">Fill in the blank</div>
+      <div class="duo-equation">${q.equation}</div>
+      <input id="fillInput" class="fill-input" type="number" placeholder="Type your answer...">
+      <button class="btn-check" onclick="checkFillin('${q.answer}', '${q.explanation}')">Check ✅</button>
+    </div>
+  `;
+  document.getElementById('fillInput').focus();
+  document.getElementById('fillInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkFillin(q.answer, q.explanation);
+  });
+}
+
+function checkFillin(correct, explanation) {
+  const input = document.getElementById('fillInput');
+  const val = input.value.trim();
+  if (!val) return;
+
+  input.disabled = true;
+  document.querySelector('.btn-check').disabled = true;
+
+  if (val === correct) {
+    input.classList.add('input-correct');
+    score++;
+    showFeedback(true, explanation);
+  } else {
+    input.classList.add('input-wrong');
+    input.value = correct;
+    loseHeart();
+    showFeedback(false, explanation);
+  }
+}
+
+/* ── Drag to order ────────────────────── */
+function renderDrag(q, area) {
+  const shuffled = [...q.tiles].sort(() => Math.random() - 0.5);
+
+  area.innerHTML = `
+    <div class="duo-question">
+      <div class="duo-label">Drag to put the steps in order</div>
+      <div class="duo-equation">${q.equation}</div>
+      <div class="drag-list" id="dragList">
+        ${shuffled.map((tile, i) => `
+          <div class="drag-tile" draggable="true" data-index="${i}" data-text="${tile}">
+            <span class="drag-handle">☰</span> ${tile}
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn-check" onclick="checkDrag(${JSON.stringify(q.correctOrder)}, '${q.explanation}')">Check ✅</button>
+    </div>
+  `;
+
+  initDrag();
+}
+
+function initDrag() {
+  const list = document.getElementById('dragList');
+  let dragging = null;
+
+  list.querySelectorAll('.drag-tile').forEach(tile => {
+    tile.addEventListener('dragstart', () => {
+      dragging = tile;
+      setTimeout(() => tile.classList.add('dragging'), 0);
+    });
+    tile.addEventListener('dragend', () => {
+      tile.classList.remove('dragging');
+      dragging = null;
+    });
+    tile.addEventListener('dragover', e => {
+      e.preventDefault();
+      const after = getDragAfter(list, e.clientY);
+      if (after == null) list.appendChild(dragging);
+      else list.insertBefore(dragging, after);
+    });
+  });
+}
+
+function getDragAfter(container, y) {
+  const tiles = [...container.querySelectorAll('.drag-tile:not(.dragging)')];
+  return tiles.reduce((closest, tile) => {
+    const box = tile.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) return { offset, element: tile };
+    return closest;
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function checkDrag(correctOrder, explanation) {
+  const tiles = [...document.querySelectorAll('.drag-tile')];
+  const userOrder = tiles.map(t => t.dataset.text);
+  const correct = JSON.stringify(userOrder) === JSON.stringify(correctOrder);
+
+  tiles.forEach((t, i) => {
+    t.classList.add(t.dataset.text === correctOrder[i] ? 'correct' : 'wrong');
+  });
+
+  document.querySelector('.btn-check').disabled = true;
+
+  if (correct) {
+    score++;
+    showFeedback(true, explanation);
+  } else {
+    loseHeart();
+    showFeedback(false, explanation);
+  }
+}
+
+/* ── Feedback bar ─────────────────────── */
+function showFeedback(correct, explanation) {
+  const existing = document.querySelector('.feedback-bar');
+  if (existing) existing.remove();
+
+  const bar = document.createElement('div');
+  bar.className = `feedback-bar ${correct ? 'fb-correct' : 'fb-wrong'}`;
+  bar.innerHTML = `
+    <div class="fb-left">
+      <span class="fb-icon">${correct ? '✅' : '❌'}</span>
+      <div>
+        <div class="fb-title">${correct ? 'Correct!' : 'Not quite!'}</div>
+        <div class="fb-explain">${explanation}</div>
+      </div>
+    </div>
+    <button class="btn-next" onclick="nextQuestion()">
+      ${questionIndex + 1 >= algebraQuestions.length ? 'Finish 🏁' : 'Continue →'}
+    </button>
+  `;
+  document.querySelector('.card').appendChild(bar);
+}
+
+function nextQuestion() {
+  questionIndex++;
+  document.querySelector('.feedback-bar')?.remove();
+  if (hearts <= 0) { showGameOver(); return; }
+  loadQuestion();
+}
+
+/* ── Hearts ───────────────────────────── */
+function loseHeart() {
+  hearts = Math.max(0, hearts - 1);
+  const display = document.getElementById('heartsDisplay');
+  display.textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3 - hearts);
+  display.classList.add('heart-shake');
+  setTimeout(() => display.classList.remove('heart-shake'), 400);
+}
+
+/* ── Game over ────────────────────────── */
+function showGameOver() {
+  document.getElementById('questionArea').innerHTML = `
+    <div class="result-box">
+      <div class="result-emoji">💔</div>
+      <h3>Out of hearts!</h3>
+      <p>Don't give up — try again!</p>
+      <button class="btn-check" style="margin-top:24px" onclick="showAlgebra()">Try Again 🔄</button>
+      <br><br>
+      <button class="btn-back" onclick="renderHome()">← Home</button>
+    </div>
+  `;
+}
+
+/* ── Result ───────────────────────────── */
+function showResult() {
+  document.getElementById('progressFill').style.width = '100%';
+  const total = algebraQuestions.length;
+  const earned = score >= total ? 3 : score >= total * 0.6 ? 2 : score >= 1 ? 1 : 0;
+  stars[1] = Math.max(stars[1], earned);
+
+  document.getElementById('questionArea').innerHTML = `
+    <div class="result-box">
+      <div class="result-emoji">${score === total ? '🏆' : score >= 3 ? '🎉' : '💪'}</div>
+      <h3>Realm Complete!</h3>
+      <p>You scored <strong>${score} / ${total}</strong></p>
+      <div class="result-stars">${starsDisplay(earned)}</div>
+      <button class="btn-check" style="margin-top:24px" onclick="showAlgebra()">Play Again 🔄</button>
+      <br><br>
+      <button class="btn-back" style="margin-top:12px" onclick="renderHome()">← Home</button>
+    </div>
+  `;
+}
 
 renderHome();
+
+renderHome();
+
