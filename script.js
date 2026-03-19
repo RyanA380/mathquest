@@ -270,6 +270,7 @@ const algebraQuestions = [
   }
 ];
 
+
 function loadQuestion() {
   if (questionIndex >= algebraQuestions.length) {
     showResult();
