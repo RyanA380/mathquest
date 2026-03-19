@@ -285,3 +285,82 @@ body {
 .duo-question {
   padding-bottom: 80px;
 }
+/* ── Home topbar ──────────────────────── */
+.home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.home-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 16px;
+  min-width: 70px;
+}
+.stat-icon  { font-size: 1.4rem; }
+.stat-val   { font-family: 'Fredoka One', cursive; font-size: 1.3rem; color: var(--yellow); }
+.stat-label { font-size: .7rem; color: var(--muted); font-weight: 700; }
+
+/* ── XP bar ───────────────────────────── */
+.xp-wrap { margin-bottom: 24px; }
+.xp-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.xp-bg {
+  height: 14px;
+  background: var(--panel);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--yellow), #f97316);
+  border-radius: 999px;
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Realm gems label ─────────────────── */
+.realm-gems {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--yellow);
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+/* ── Daily challenge ──────────────────── */
+.daily-challenge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #1e3a5f, #1a1040);
+  border: 2px solid var(--blue);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+  animation: fadeUp .4s .25s ease both;
+}
+.daily-challenge:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px #3b82f633;
+}
+.daily-left  { display: flex; align-items: center; gap: 14px; }
+.daily-icon  { font-size: 1.8rem; }
+.daily-title { font-family: 'Fredoka One', cursive; font-size: 1.1rem; }
+.daily-sub   { color: var(--muted); font-size: .82rem; margin-top: 2px; }
+.daily-arrow { font-size: 1.4rem; color: var(--blue); font-weight: 900; }
