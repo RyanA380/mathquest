@@ -4,11 +4,45 @@ function starsDisplay(n) {
   return [1,2,3].map(i => i <= n ? '⭐' : '☆').join('');
 }
 function renderHome() {
+  score = 0;
+  questionIndex = 0;
+  hearts = 3;
+
+  const totalStars = Object.values(stars).reduce((a, b) => a + b, 0);
+  const gems = totalStars * 10;
+
   document.getElementById('app').innerHTML = `
     <div class="card">
-      <h1 class="home-title">Math Quest 🚀</h1>
+
+      <!-- Top bar -->
+      <div class="home-topbar">
+        <div class="home-stat">
+          <span class="stat-icon">🔥</span>
+          <span class="stat-val" id="streakVal">1</span>
+          <span class="stat-label">Streak</span>
+        </div>
+        <h1 class="home-title">Math Quest 🚀</h1>
+        <div class="home-stat">
+          <span class="stat-icon">💎</span>
+          <span class="stat-val">${gems}</span>
+          <span class="stat-label">Gems</span>
+        </div>
+      </div>
+
       <p class="home-sub">Middle school math — pick a realm!</p>
 
+      <!-- XP bar -->
+      <div class="xp-wrap">
+        <div class="xp-label">
+          <span>⚡ XP</span>
+          <span>${totalStars * 50} / 150</span>
+        </div>
+        <div class="xp-bg">
+          <div class="xp-fill" style="width: ${Math.min((totalStars * 50 / 150) * 100, 100)}%"></div>
+        </div>
+      </div>
+
+      <!-- Realm cards -->
       <div class="realms-grid">
 
         <div class="realm-card green" onclick="showRealm(1)">
@@ -16,23 +50,26 @@ function renderHome() {
           <div class="realm-name">Realm 1: Algebra</div>
           <div class="realm-desc">Solve for x and crack equations.</div>
           <div class="realm-stars">${starsDisplay(stars[1])}</div>
+          <div class="realm-gems">💎 +10 gems</div>
           <span class="realm-tag tag-green">Available</span>
         </div>
 
-        <div class="realm-card blue" onclick="showRealm(2)">
+        <div class="realm-card blue locked">
           <div class="realm-icon">📐</div>
           <div class="realm-name">Realm 2: Geometry</div>
           <div class="realm-desc">Areas, angles and shapes.</div>
           <div class="realm-stars">${starsDisplay(stars[2])}</div>
-          <span class="realm-tag tag-blue">Available</span>
+          <div class="realm-gems">💎 +10 gems</div>
+          <span class="realm-tag tag-locked">Coming Day 3</span>
         </div>
 
-        <div class="realm-card yellow" onclick="showRealm(3)">
+        <div class="realm-card yellow locked">
           <div class="realm-icon">🔣</div>
           <div class="realm-name">Realm 3: Fractions</div>
           <div class="realm-desc">Fractions, decimals and more.</div>
           <div class="realm-stars">${starsDisplay(stars[3])}</div>
-          <span class="realm-tag tag-yellow">Available</span>
+          <div class="realm-gems">💎 +10 gems</div>
+          <span class="realm-tag tag-locked">Coming soon</span>
         </div>
 
         <div class="realm-card locked">
@@ -40,10 +77,24 @@ function renderHome() {
           <div class="realm-name">Realm 4: Percentages</div>
           <div class="realm-desc">Ratios, percentages and rates.</div>
           <div class="realm-stars">☆☆☆</div>
-          <span class="realm-tag tag-locked">Coming soon</span>
+          <div class="realm-gems">💎 +10 gems</div>
+          <span class="realm-tag tag-locked">Locked</span>
         </div>
 
       </div>
+
+      <!-- Daily challenge -->
+      <div class="daily-challenge" onclick="showAlgebra()">
+        <div class="daily-left">
+          <span class="daily-icon">⚡</span>
+          <div>
+            <div class="daily-title">Daily Challenge</div>
+            <div class="daily-sub">Complete for bonus 💎 20 gems!</div>
+          </div>
+        </div>
+        <div class="daily-arrow">→</div>
+      </div>
+
     </div>
   `;
 }
