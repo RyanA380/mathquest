@@ -10,92 +10,178 @@ function renderHome() {
 
   const totalStars = Object.values(stars).reduce((a, b) => a + b, 0);
   const gems = totalStars * 10;
+  const xpPct = Math.min((totalStars * 50 / 150) * 100, 100);
 
   document.getElementById('app').innerHTML = `
-    <div class="card">
 
-      <!-- Top bar -->
-      <div class="home-topbar">
-        <div class="home-stat">
-          <span class="stat-icon">🔥</span>
-          <span class="stat-val" id="streakVal">1</span>
-          <span class="stat-label">Streak</span>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">⚡ MathQuest</div>
+      <div class="sidebar-nav">
+        <div class="nav-item active">
+          <span class="nav-icon">🗺️</span> Learn
         </div>
-        <h1 class="home-title">Math Quest 🚀</h1>
-        <div class="home-stat">
-          <span class="stat-icon">💎</span>
-          <span class="stat-val">${gems}</span>
-          <span class="stat-label">Gems</span>
+        <div class="nav-item">
+          <span class="nav-icon">🏆</span> Leaderboard
         </div>
-      </div>
-
-      <p class="home-sub">Middle school math — pick a realm!</p>
-
-      <!-- XP bar -->
-      <div class="xp-wrap">
-        <div class="xp-label">
-          <span>⚡ XP</span>
-          <span>${totalStars * 50} / 150</span>
+        <div class="nav-item">
+          <span class="nav-icon">👤</span> Profile
         </div>
-        <div class="xp-bg">
-          <div class="xp-fill" style="width: ${Math.min((totalStars * 50 / 150) * 100, 100)}%"></div>
+        <div class="nav-item">
+          <span class="nav-icon">⚙️</span> Settings
         </div>
       </div>
-
-      <!-- Realm cards -->
-      <div class="realms-grid">
-
-        <div class="realm-card green" onclick="showRealm(1)">
-          <div class="realm-icon">🔢</div>
-          <div class="realm-name">Realm 1: Algebra</div>
-          <div class="realm-desc">Solve for x and crack equations.</div>
-          <div class="realm-stars">${starsDisplay(stars[1])}</div>
-          <div class="realm-gems">💎 +10 gems</div>
-          <span class="realm-tag tag-green">Available</span>
-        </div>
-
-        <div class="realm-card blue locked">
-          <div class="realm-icon">📐</div>
-          <div class="realm-name">Realm 2: Geometry</div>
-          <div class="realm-desc">Areas, angles and shapes.</div>
-          <div class="realm-stars">${starsDisplay(stars[2])}</div>
-          <div class="realm-gems">💎 +10 gems</div>
-          <span class="realm-tag tag-locked">Coming Day 3</span>
-        </div>
-
-        <div class="realm-card yellow locked">
-          <div class="realm-icon">🔣</div>
-          <div class="realm-name">Realm 3: Fractions</div>
-          <div class="realm-desc">Fractions, decimals and more.</div>
-          <div class="realm-stars">${starsDisplay(stars[3])}</div>
-          <div class="realm-gems">💎 +10 gems</div>
-          <span class="realm-tag tag-locked">Coming soon</span>
-        </div>
-
-        <div class="realm-card locked">
-          <div class="realm-icon">🔒</div>
-          <div class="realm-name">Realm 4: Percentages</div>
-          <div class="realm-desc">Ratios, percentages and rates.</div>
-          <div class="realm-stars">☆☆☆</div>
-          <div class="realm-gems">💎 +10 gems</div>
-          <span class="realm-tag tag-locked">Locked</span>
-        </div>
-
-      </div>
-
-      <!-- Daily challenge -->
-      <div class="daily-challenge" onclick="showAlgebra()">
-        <div class="daily-left">
-          <span class="daily-icon">⚡</span>
-          <div>
-            <div class="daily-title">Daily Challenge</div>
-            <div class="daily-sub">Complete for bonus 💎 20 gems!</div>
+      <div class="sidebar-stats">
+        <div class="sidebar-stat">
+          <span class="ss-icon">🔥</span>
+          <div class="ss-info">
+            <span class="ss-val">1</span>
+            <span class="ss-label">Day Streak</span>
           </div>
         </div>
-        <div class="daily-arrow">→</div>
+        <div class="sidebar-stat">
+          <span class="ss-icon">💎</span>
+          <div class="ss-info">
+            <span class="ss-val">${gems}</span>
+            <span class="ss-label">Gems</span>
+          </div>
+        </div>
+        <div class="sidebar-stat">
+          <span class="ss-icon">⚡</span>
+          <div class="ss-info">
+            <span class="ss-val">${totalStars * 50} XP</span>
+            <span class="ss-label">Experience</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main">
+      <div class="main-header">
+        <div class="main-title">🗺️ Learning Path</div>
+        <div class="main-sub">Complete realms to earn gems and level up!</div>
       </div>
 
-    </div>
+      <div class="xp-wrap">
+        <div class="xp-label">
+          <span>⚡ Level 1</span>
+          <span>${totalStars * 50} / 150 XP</span>
+        </div>
+        <div class="xp-bg">
+          <div class="xp-fill" style="width:${xpPct}%"></div>
+        </div>
+      </div>
+
+      <div class="section-label">Your Realms</div>
+
+      <div class="realm-path">
+
+        <div class="path-step">
+          <div class="realm-bubble c-green" onclick="showRealm(1)">
+            <div class="bubble-icon">🔢</div>
+            <div class="bubble-info">
+              <div class="bubble-name">Realm 1: Algebra</div>
+              <div class="bubble-desc">Solve for x and crack equations</div>
+              <div class="bubble-stars">${starsDisplay(stars[1])}</div>
+            </div>
+            <span class="bubble-tag tag-green">+10 💎</span>
+          </div>
+        </div>
+
+        <div class="path-connector ${stars[1] > 0 ? 'done' : ''}"></div>
+
+        <div class="path-step">
+          <div class="realm-bubble c-blue locked">
+            <div class="bubble-icon">📐</div>
+            <div class="bubble-info">
+              <div class="bubble-name">Realm 2: Geometry</div>
+              <div class="bubble-desc">Areas, angles and shapes</div>
+              <div class="bubble-stars">${starsDisplay(stars[2])}</div>
+            </div>
+            <span class="bubble-tag tag-locked">🔒</span>
+          </div>
+        </div>
+
+        <div class="path-connector"></div>
+
+        <div class="path-step">
+          <div class="realm-bubble c-yellow locked">
+            <div class="bubble-icon">🔣</div>
+            <div class="bubble-info">
+              <div class="bubble-name">Realm 3: Fractions</div>
+              <div class="bubble-desc">Fractions, decimals and more</div>
+              <div class="bubble-stars">${starsDisplay(stars[3])}</div>
+            </div>
+            <span class="bubble-tag tag-locked">🔒</span>
+          </div>
+        </div>
+
+        <div class="path-connector"></div>
+
+        <div class="path-step">
+          <div class="realm-bubble locked">
+            <div class="bubble-icon">🔒</div>
+            <div class="bubble-info">
+              <div class="bubble-name">Realm 4: Percentages</div>
+              <div class="bubble-desc">Ratios, percentages and rates</div>
+              <div class="bubble-stars">☆☆☆</div>
+            </div>
+            <span class="bubble-tag tag-locked">🔒</span>
+          </div>
+        </div>
+
+        <div class="path-connector"></div>
+
+        <!-- Daily challenge -->
+        <div class="path-step">
+          <div class="daily-card" onclick="showAlgebra()">
+            <span class="daily-icon">⚡</span>
+            <div>
+              <div class="daily-title">Daily Challenge</div>
+              <div class="daily-sub">Bonus 💎 20 gems today!</div>
+            </div>
+            <span class="daily-arrow">→</span>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Right panel -->
+    <aside class="right-panel">
+      <div class="rp-card">
+        <div class="rp-title">🔥 Streak</div>
+        <div class="streak-box">
+          <div class="streak-fire">🔥</div>
+          <div class="streak-num">1</div>
+          <div class="streak-label">Day streak</div>
+        </div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-title">🏆 Leaderboard</div>
+        <div class="leaderboard-row">
+          <span class="lb-rank">🥇</span>
+          <span class="lb-name">You</span>
+          <span class="lb-gems">💎 ${gems}</span>
+        </div>
+        <div class="leaderboard-row">
+          <span class="lb-rank">🥈</span>
+          <span class="lb-name">Alex</span>
+          <span class="lb-gems">💎 30</span>
+        </div>
+        <div class="leaderboard-row">
+          <span class="lb-rank">🥉</span>
+          <span class="lb-name">Sam</span>
+          <span class="lb-gems">💎 20</span>
+        </div>
+        <div class="leaderboard-row">
+          <span class="lb-rank">4</span>
+          <span class="lb-name">Jordan</span>
+          <span class="lb-gems">💎 10</span>
+        </div>
+      </div>
+    </aside>
   `;
 }
 function showRealm(n) {
