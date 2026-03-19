@@ -1,5 +1,11 @@
 const stars = { 1: 0, 2: 0, 3: 0, 4: 0 };
+let darkMode = true;
 
+function toggleTheme() {
+  darkMode = !darkMode;
+  document.body.classList.toggle('light', !darkMode);
+  document.getElementById('themeBtn').textContent = darkMode ? '🌙' : '☀️';
+}
 function starsDisplay(n) {
   return [1,2,3].map(i => i <= n ? '⭐' : '☆').join('');
 }
@@ -29,6 +35,9 @@ function renderHome() {
         </div>
         <div class="nav-item">
           <span class="nav-icon">⚙️</span> Settings
+        </div>
+        <div class="nav-item" onclick="toggleTheme()">
+          <span class="nav-icon" id="themeBtn">🌙</span> Theme
         </div>
       </div>
       <div class="sidebar-stats">
