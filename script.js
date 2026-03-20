@@ -1,3 +1,132 @@
+// ── Auth ──────────────────────────────────
+let currentUser = null;
+
+function renderAuth(mode = 'login') {
+  document.getElementById('app').innerHTML = `
+    <div style="display:flex; min-height:100vh; width:100%;">
+
+      <!-- Left panel -->
+      <div style="flex:1; background:linear-gradient(135deg,#0d1b2e,#0a1628); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 40px; border-right:1px solid var(--border);">
+        <div style="font-family:'Fredoka One',cursive; font-size:3rem; background:linear-gradient(135deg,#22c55e,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:16px;">⚡ MathQuest</div>
+        <p style="color:var(--muted); font-size:1rem; font-weight:700; text-align:center; max-width:260px; line-height:1.6;">Master middle school math one realm at a time.</p>
+        <div style="margin-top:48px; display:flex; flex-direction:column; gap:16px; width:100%; max-width:280px;">
+          ${['🔢 Algebra', '📐 Geometry', '🔣 Fractions', '📊 Percentages'].map(r => `
+            <div style="background:#ffffff08; border:1px solid var(--border); border-radius:12px; padding:14px 18px; font-weight:700; font-size:.95rem;">
+              ${r}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:40px;">
+        <div style="width:100%; max-width:400px;">
+
+          <h2 style="font-family:'Fredoka One',cursive; font-size:2rem; margin-bottom:6px;">
+            ${mode === 'login' ? 'Welcome back! 👋' : 'Join for free! 🚀'}
+          </h2>
+          <p style="color:var(--muted); font-size:.9rem; font-weight:700; margin-bottom:32px;">
+            ${mode === 'login' ? 'Log in to continue your streak.' : 'Start your math adventure today.'}
+          </p>
+
+          ${mode === 'signup' ? `
+            <div style="margin-bottom:16px;">
+              <label style="font-size:.8rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; display:block; margin-bottom:6px;">Your Name</label>
+              <input id="authName" type="text" placeholder="e.g. Alex" style="${inputStyle()}">
+            </div>
+          ` : ''}
+
+          <div style="margin-bottom:16px;">
+            <label style="font-size:.8rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; display:block; margin-bottom:6px;">Email</label>
+            <input id="authEmail" type="email" placeholder="you@email.com" style="${inputStyle()}">
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <label style="font-size:.8rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; display:block; margin-bottom:6px;">Password</label>
+            <input id="authPassword" type="password" placeholder="••••••••" style="${inputStyle()}">
+          </div>
+
+          <div id="authError" style="display:none; background:#f8717118; border:1px solid var(--red); border-radius:10px; padding:10px 14px; font-size:.85rem; font-weight:700; color:var(--red); margin-bottom:16px;"></div>
+
+          <button onclick="${mode === 'login' ? 'handleLogin()' : 'handleSignup()'}" style="${bigBtnStyle('#22c55e')}">
+            ${mode === 'login' ? '🔑 Log In' : '🚀 Create Account'}
+          </button>
+
+          <div style="text-align:center; margin-top:20px; color:var(--muted); font-size:.88rem; font-weight:700;">
+            ${mode === 'login'
+              ? `Don't have an account? <span onclick="renderAuth('signup')" style="color:var(--green); cursor:pointer;">Sign up free →</span>`
+              : `Already have an account? <span onclick="renderAuth('login')" style="color:var(--blue); cursor:pointer;">Log in →</span>`
+            }
+          </div>
+
+          <div style="display:flex; align-items:center; gap:12px; margin:24px 0;">
+            <div style="flex:1; height:1px; background:var(--border);"></div>
+            <span style="color:var(--muted); font-size:.8rem; font-weight:700;">OR</span>
+            <div style="flex:1; height:1px; background:var(--border);"></div>
+          </div>
+
+          <button onclick="handleGuest()" style="${bigBtnStyle('transparent', true)}">
+            👤 Continue as Guest
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+function inputStyle() {
+  return `width:100%; padding:14px 16px; background:var(--panel); border:2px solid var(--border); border-radius:12px; color:var(--text); font-family:'Nunito',sans-serif; font-size:1rem; font-weight:700; outline:none; transition:border-color .2s;`;
+}
+
+function bigBtnStyle(bg, ghost = false) {
+  return `width:100%; padding:15px; background:${bg}; border:${ghost ? '2px solid var(--border)' : 'none'}; border-radius:14px; color:${ghost ? 'var(--muted)' : '#0d1117'}; font-family:'Nunito',sans-serif; font-size:1.05rem; font-weight:800; cursor:pointer; transition:filter .2s, transform .15s;`;
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function handleLogin() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+
+  if (!email || !password) return showAuthError('Please fill in all fields.');
+
+  const users = JSON.parse(localStorage.getItem('mq_users') || '{}');
+  if (!users[email]) return showAuthError('No account found. Sign up first!');
+  if (users[email].password !== password) return showAuthError('Wrong password. Try again!');
+
+  currentUser = { email, name: users[email].name };
+  renderHome();
+}
+
+function handleSignup() {
+  const name     = document.getElementById('authName').value.trim();
+  const email    = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+
+  if (!name || !email || !password) return showAuthError('Please fill in all fields.');
+  if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
+
+  const users = JSON.parse(localStorage.getItem('mq_users') || '{}');
+  if (users[email]) return showAuthError('An account with this email already exists!');
+
+  users[email] = { name, password };
+  localStorage.setItem('mq_users', JSON.stringify(users));
+
+  currentUser = { email, name };
+  renderHome();
+}
+
+function handleGuest() {
+  currentUser = { name: 'Guest', email: null };
+  renderHome();
+}
+
 const stars = { 1: 0, 2: 0, 3: 0, 4: 0 };
 let darkMode = true;
 
@@ -22,7 +151,10 @@ function renderHome() {
 
     <!-- Sidebar -->
     <nav class="sidebar">
-      <div class="sidebar-logo">⚡ MathQuest</div>
+     <div class="sidebar-logo">⚡ MathQuest</div>
+<div style="padding:0 8px; margin-bottom:24px; font-size:.85rem; font-weight:700; color:var(--muted);">
+  👋 Hey, ${currentUser.name}!
+</div>
       <div class="sidebar-nav">
         <div class="nav-item active">
           <span class="nav-icon">🗺️</span> Learn
@@ -39,6 +171,9 @@ function renderHome() {
         <div class="nav-item" onclick="toggleTheme()">
           <span class="nav-icon" id="themeBtn">🌙</span> Theme
         </div>
+        <div class="nav-item" onclick="renderAuth('login')" style="margin-top:auto; color:var(--red);">
+        <span class="nav-icon">🚪</span> Log Out
+      </div>    
       </div>
       <div class="sidebar-stats">
         <div class="sidebar-stat">
@@ -516,6 +651,4 @@ function showResult() {
   `;
 }
 
-renderHome();
-
-renderHome();
+renderAuth('login');
