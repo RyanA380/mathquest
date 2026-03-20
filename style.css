@@ -532,31 +532,14 @@ body {
 
 /* ── Light mode ───────────────────────── */
 body.light {
-  background: #f8fafc;
-  color: #0f172a;
+  --bg:     #f8fafc;
+  --card:   #ffffff;
+  --panel:  #f1f5f9;
+  --border: #e2e8f0;
+  --muted:  #64748b;
+  --text:   #0f172a;
 }
-body.light .sidebar       { background: #ffffff; border-color: #e2e8f0; }
-body.light .main          { background: transparent; }
-body.light .card          { background: #ffffff; border-color: #e2e8f0; }
-body.light .rp-card       { background: #ffffff; border-color: #e2e8f0; }
-body.light .realm-bubble  { background: #ffffff; border-color: #e2e8f0; }
-body.light .sidebar-stat  { background: #f1f5f9; border-color: #e2e8f0; }
-body.light .nav-item:hover{ background: #f1f5f9; }
-body.light .nav-item.active{background: #f1f5f9; }
-body.light .xp-bg         { background: #e2e8f0; border-color: #cbd5e1; }
-body.light .duo-progress-bg{background: #e2e8f0; border-color: #cbd5e1; }
-body.light .mcq-tile      { background: #f1f5f9; border-color: #e2e8f0; color: #0f172a; }
-body.light .drag-tile     { background: #f1f5f9; border-color: #e2e8f0; color: #0f172a; }
-body.light .fill-input    { background: #f1f5f9; border-color: #e2e8f0; color: #0f172a; }
-body.light .duo-equation  { color: #b45309; }
-body.light .path-connector{ background: #e2e8f0; }
-body.light .panel         { background: #f1f5f9; }
-body.light .ss-val        { color: #b45309; }
-body.light .leaderboard-row{ border-color: #e2e8f0; }
-body.light .rp-title      { color: #64748b; }
-body.light .home-sub      { color: #64748b; }
-body.light .main-sub      { color: #64748b; }
-body.light .section-label { color: #94a3b8; }
-body.light .bubble-desc   { color: #64748b; }
-body.light .bubble-meta   { color: #94a3b8; }
-body.light .muted         { color: #64748b; }
+
+body.light .duo-equation { color: #b45309; }
+body.light .ss-val       { color: #b45309; }
+body.light .path-connector { background: #e2e8f0; }
