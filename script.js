@@ -133,7 +133,6 @@ function showAuthError(msg) {
   el.textContent = msg;
   el.style.display = 'block';
 }
-
 function handleLogin() {
   const email    = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value.trim();
@@ -142,9 +141,9 @@ function handleLogin() {
   if (!users[email]) return showAuthError('No account found. Sign up first!');
   if (users[email].password !== password) return showAuthError('Wrong password. Try again!');
   currentUser = { email, name: users[email].name };
+  localStorage.setItem('mq_session', JSON.stringify(currentUser));
   renderHome();
 }
-
 function handleSignup() {
   const name     = document.getElementById('authName').value.trim();
   const email    = document.getElementById('authEmail').value.trim();
@@ -156,14 +155,13 @@ function handleSignup() {
   users[email] = { name, password };
   localStorage.setItem('mq_users', JSON.stringify(users));
   currentUser = { email, name };
+  localStorage.setItem('mq_session', JSON.stringify(currentUser));
   renderHome();
 }
-
 function handleGuest() {
   currentUser = { name: 'Guest', email: null };
   renderHome();
 }
-
 // ── App state ─────────────────────────────
 const stars = { 1: 0, 2: 0, 3: 0, 4: 0 };
 let darkMode = true;
@@ -203,7 +201,7 @@ function renderHome() {
         <div class="nav-item"><span class="nav-icon">👤</span> Profile</div>
         <div class="nav-item"><span class="nav-icon">⚙️</span> Settings</div>
         <div class="nav-item" onclick="toggleTheme()"><span class="nav-icon" id="themeBtn">🌙</span> Theme</div>
-        <div class="nav-item" onclick="renderAuth('login')" style="color:var(--red);"><span class="nav-icon">🚪</span> Log Out</div>
+        <div class="nav-item" onclick="logOut()" style="color:var(--red);"><span class="nav-icon">🚪</span> Log Out</div>
       </div>
       <div class="sidebar-stats">
         <div class="sidebar-stat">
@@ -742,7 +740,6 @@ async function showFeedback(correct, explanation) {
   } catch (e) {
     if (bubble) bubble.textContent = correct ? '✅ ' + explanation : '❌ ' + explanation;
   }
-}
 
 function nextQuestion() {
   questionIndex++;
@@ -879,4 +876,15 @@ function useHint() {
   };
   document.getElementById('mascotBubble').textContent = '💡 ' + (hints[q.type] || 'Think step by step!');
 }
-renderAuth('login');
+function logOut() {
+  localStorage.removeItem('mq_session');
+  currentUser = null;
+  renderAuth('login');
+}
+const savedSession = localStorage.getItem('mq_session');
+if (savedSession) {
+  currentUser = JSON.parse(savedSession);
+  renderHome();
+} else {
+  renderAuth('login');
+}
