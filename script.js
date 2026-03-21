@@ -133,6 +133,7 @@ function showAuthError(msg) {
   el.textContent = msg;
   el.style.display = 'block';
 }
+
 function handleLogin() {
   const email    = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value.trim();
@@ -144,6 +145,7 @@ function handleLogin() {
   localStorage.setItem('mq_session', JSON.stringify(currentUser));
   renderHome();
 }
+
 function handleSignup() {
   const name     = document.getElementById('authName').value.trim();
   const email    = document.getElementById('authEmail').value.trim();
@@ -158,10 +160,18 @@ function handleSignup() {
   localStorage.setItem('mq_session', JSON.stringify(currentUser));
   renderHome();
 }
+
 function handleGuest() {
   currentUser = { name: 'Guest', email: null };
   renderHome();
 }
+
+function logOut() {
+  localStorage.removeItem('mq_session');
+  currentUser = null;
+  renderAuth('login');
+}
+
 // ── App state ─────────────────────────────
 const stars = { 1: 0, 2: 0, 3: 0, 4: 0 };
 let darkMode = true;
@@ -335,13 +345,11 @@ function showAlgebra() {
   score = 0;
   questionIndex = 0;
   hearts = 3;
-  let lessonStreak = 0;
-  let gems = Object.values(stars).reduce((a, b) => a + b, 0) * 10;
+  window.lessonStreak = 0;
+  window.lessonGems = Object.values(stars).reduce((a, b) => a + b, 0) * 10;
 
   document.getElementById('app').innerHTML = `
     <div class="lesson-shell">
-
-      <!-- Top bar -->
       <div class="lesson-topbar">
         <button class="btn-back" onclick="renderHome()">✕</button>
         <div class="duo-progress-wrap">
@@ -351,35 +359,23 @@ function showAlgebra() {
         </div>
         <div class="lesson-stats">
           <div class="lesson-stat" id="streakStat">🔥 <span id="streakCount">0</span></div>
-          <div class="lesson-stat" id="gemStat">💎 <span id="gemCount">${gems}</span></div>
+          <div class="lesson-stat" id="gemStat">💎 <span id="gemCount">${window.lessonGems}</span></div>
           <div class="lesson-stat" id="heartStat">❤️❤️❤️</div>
         </div>
       </div>
-
-      <!-- Main area -->
       <div class="lesson-body">
-
-        <!-- Mascot -->
         <div class="mascot-wrap">
           <div class="mascot" id="mascot">🦊</div>
           <div class="mascot-bubble" id="mascotBubble">Let's solve some algebra! You got this! 💪</div>
         </div>
-
-        <!-- Question -->
         <div class="lesson-question" id="questionArea"></div>
-
       </div>
-
-      <!-- Hint button -->
       <div class="hint-wrap">
-        <button class="btn-hint" onclick="useHint()" id="hintBtn">💡 Hint (costs 5 💎)</button>
+        <button class="btn-hint" onclick="useHint()">💡 Hint (costs 5 💎)</button>
       </div>
-
     </div>
   `;
 
-  window.lessonStreak = 0;
-  window.lessonGems = gems;
   loadQuestion();
 }
 
@@ -387,7 +383,6 @@ function showAlgebra() {
 const algebraQuestions = [
   {
     type: 'mcq',
-    question: 'Solve for x',
     equation: '2x + 3 = 11',
     options: ['x = 3', 'x = 4', 'x = 5', 'x = 7'],
     answer: 'x = 4',
@@ -395,7 +390,6 @@ const algebraQuestions = [
   },
   {
     type: 'drag',
-    question: 'Arrange the steps to solve:',
     equation: '3x = 15',
     tiles: ['x = 5', 'Divide both sides by 3', '3x = 15', 'x = 15 ÷ 3'],
     correctOrder: ['3x = 15', 'Divide both sides by 3', 'x = 15 ÷ 3', 'x = 5'],
@@ -403,14 +397,12 @@ const algebraQuestions = [
   },
   {
     type: 'fillin',
-    question: 'Fill in the blank',
     equation: 'x ÷ 4 = 9, so x = ___',
     answer: '36',
     explanation: 'Multiply both sides by 4: x = 9 × 4 = 36'
   },
   {
     type: 'mcq',
-    question: 'Solve for x',
     equation: '5x − 10 = 20',
     options: ['x = 4', 'x = 5', 'x = 6', 'x = 8'],
     answer: 'x = 6',
@@ -418,7 +410,6 @@ const algebraQuestions = [
   },
   {
     type: 'drag',
-    question: 'Arrange the steps to solve:',
     equation: '2x + 6 = 14',
     tiles: ['x = 4', '2x = 8', 'Subtract 6 from both sides', '2x + 6 = 14'],
     correctOrder: ['2x + 6 = 14', 'Subtract 6 from both sides', '2x = 8', 'x = 4'],
@@ -426,7 +417,6 @@ const algebraQuestions = [
   },
   {
     type: 'fillin',
-    question: 'Fill in the blank',
     equation: '3x + 7 = 22, so x = ___',
     answer: '5',
     explanation: '3x = 22 − 7 = 15, so x = 15 ÷ 3 = 5'
@@ -434,13 +424,9 @@ const algebraQuestions = [
 ];
 
 function loadQuestion() {
-  if (questionIndex >= algebraQuestions.length) {
-    showResult();
-    return;
-  }
+  if (questionIndex >= algebraQuestions.length) { showResult(); return; }
   const q = algebraQuestions[questionIndex];
-  const pct = (questionIndex / algebraQuestions.length) * 100;
-  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressFill').style.width = (questionIndex / algebraQuestions.length * 100) + '%';
   const area = document.getElementById('questionArea');
   if (q.type === 'mcq')    renderMCQ(q, area);
   if (q.type === 'fillin') renderFillin(q, area);
@@ -465,98 +451,43 @@ function renderMCQ(q, area) {
 }
 
 function checkMCQ(btn, selected, correct, explanation) {
-  const allBtns = document.querySelectorAll('.mcq-tile');
-  allBtns.forEach(b => b.disabled = true);
+  document.querySelectorAll('.mcq-tile').forEach(b => b.disabled = true);
   if (selected === correct) {
     btn.classList.add('correct');
     score++;
     playCorrect();
+    launchConfetti();
+    updateStreak(true);
+    updateGems(10);
+    setMascot('correct');
     showFeedback(true, explanation);
   } else {
     btn.classList.add('wrong');
-    allBtns.forEach(b => { if (b.textContent.trim() === correct) b.classList.add('correct'); });
+    document.querySelectorAll('.mcq-tile').forEach(b => { if (b.textContent.trim() === correct) b.classList.add('correct'); });
     playWrong();
     loseHeart();
+    updateStreak(false);
+    setMascot('wrong');
     showFeedback(false, explanation);
   }
 }
 
 // ── Fill in the blank ─────────────────────
-function checkMCQ(btn, selected, correct, explanation) {
-  const allBtns = document.querySelectorAll('.mcq-tile');
-  allBtns.forEach(b => b.disabled = true);
-  if (selected === correct) {
-    btn.classList.add('correct');
-    score++;
-    playCorrect();
-    launchConfetti();
-    updateStreak(true);
-    updateGems(10);
-    setMascot('correct');
-    showFeedback(true, explanation);
-  } else {
-    btn.classList.add('wrong');
-    allBtns.forEach(b => { if (b.textContent.trim() === correct) b.classList.add('correct'); });
-    playWrong();
-    loseHeart();
-    updateStreak(false);
-    setMascot('wrong');
-    showFeedback(false, explanation);
-  }
-}
-
-function checkFillin(correct, explanation) {
-  const input = document.getElementById('fillInput');
-  const val = input.value.trim();
-  if (!val) return;
-  input.disabled = true;
-  document.getElementById('checkBtn').disabled = true;
-  if (val === correct) {
-    input.classList.add('input-correct');
-    score++;
-    playCorrect();
-    launchConfetti();
-    updateStreak(true);
-    updateGems(10);
-    setMascot('correct');
-    showFeedback(true, explanation);
-  } else {
-    input.classList.add('input-wrong');
-    input.value = `✗  Answer: ${correct}`;
-    playWrong();
-    loseHeart();
-    updateStreak(false);
-    setMascot('wrong');
-    showFeedback(false, explanation);
-  }
-}
-
-function checkDrag() {
-  const correct = window.currentDragAnswer;
-  const explanation = window.currentDragExplanation;
-  const tiles = [...document.querySelectorAll('.drag-tile')];
-  const userOrder = tiles.map(t => t.dataset.text);
-  const isCorrect = JSON.stringify(userOrder) === JSON.stringify(correct);
-  tiles.forEach((t, i) => {
-    t.classList.add(t.dataset.text === correct[i] ? 'correct' : 'wrong');
+function renderFillin(q, area) {
+  area.innerHTML = `
+    <div class="duo-question">
+      <div class="duo-label">Fill in the blank</div>
+      <div class="duo-equation">${q.equation}</div>
+      <input id="fillInput" class="fill-input" type="number" placeholder="Type your answer...">
+      <button class="btn-check" id="checkBtn" onclick="checkFillin('${q.answer}', '${q.explanation}')">Check ✅</button>
+    </div>
+  `;
+  document.getElementById('fillInput').focus();
+  document.getElementById('fillInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkFillin(q.answer, q.explanation);
   });
-  document.getElementById('checkBtn').disabled = true;
-  if (isCorrect) {
-    score++;
-    playCorrect();
-    launchConfetti();
-    updateStreak(true);
-    updateGems(10);
-    setMascot('correct');
-    showFeedback(true, explanation);
-  } else {
-    playWrong();
-    loseHeart();
-    updateStreak(false);
-    setMascot('wrong');
-    showFeedback(false, explanation);
-  }
 }
+
 function checkFillin(correct, explanation) {
   const input = document.getElementById('fillInput');
   const val = input.value.trim();
@@ -567,22 +498,27 @@ function checkFillin(correct, explanation) {
     input.classList.add('input-correct');
     score++;
     playCorrect();
+    launchConfetti();
+    updateStreak(true);
+    updateGems(10);
+    setMascot('correct');
     showFeedback(true, explanation);
   } else {
     input.classList.add('input-wrong');
     input.value = `✗  Answer: ${correct}`;
     playWrong();
     loseHeart();
+    updateStreak(false);
+    setMascot('wrong');
     showFeedback(false, explanation);
   }
 }
 
-// ── Drag to order ─────────────────────────
+// ── Drag ──────────────────────────────────
 function renderDrag(q, area) {
   const shuffled = [...q.tiles].sort(() => Math.random() - 0.5);
   window.currentDragAnswer = q.correctOrder;
   window.currentDragExplanation = q.explanation;
-
   area.innerHTML = `
     <div class="duo-question">
       <div class="duo-label">Drag to put the steps in order</div>
@@ -605,15 +541,9 @@ function initDrag() {
   const list = document.getElementById('dragList');
   let dragging = null;
   list.querySelectorAll('.drag-tile').forEach(tile => {
-    tile.addEventListener('dragstart', () => {
-      dragging = tile;
-      setTimeout(() => tile.classList.add('dragging'), 0);
-    });
-    tile.addEventListener('dragend', () => {
-      tile.classList.remove('dragging');
-      dragging = null;
-    });
-    tile.addEventListener('dragover', e => {
+    tile.addEventListener('dragstart', () => { dragging = tile; setTimeout(() => tile.classList.add('dragging'), 0); });
+    tile.addEventListener('dragend',   () => { tile.classList.remove('dragging'); dragging = null; });
+    tile.addEventListener('dragover',  e => {
       e.preventDefault();
       const after = getDragAfter(list, e.clientY);
       if (after == null) list.appendChild(dragging);
@@ -638,17 +568,21 @@ function checkDrag() {
   const tiles = [...document.querySelectorAll('.drag-tile')];
   const userOrder = tiles.map(t => t.dataset.text);
   const isCorrect = JSON.stringify(userOrder) === JSON.stringify(correct);
-  tiles.forEach((t, i) => {
-    t.classList.add(t.dataset.text === correct[i] ? 'correct' : 'wrong');
-  });
+  tiles.forEach((t, i) => t.classList.add(t.dataset.text === correct[i] ? 'correct' : 'wrong'));
   document.getElementById('checkBtn').disabled = true;
   if (isCorrect) {
     score++;
     playCorrect();
+    launchConfetti();
+    updateStreak(true);
+    updateGems(10);
+    setMascot('correct');
     showFeedback(true, explanation);
   } else {
     playWrong();
     loseHeart();
+    updateStreak(false);
+    setMascot('wrong');
     showFeedback(false, explanation);
   }
 }
@@ -667,7 +601,7 @@ async function showFeedback(correct, explanation) {
       <span class="fb-icon">${correct ? '✅' : '❌'}</span>
       <div>
         <div class="fb-title">${correct ? 'Correct!' : 'Not quite!'}</div>
-        <div class="fb-explain">${explanation}</div>
+        <div class="fb-explain" id="feedbackExplain">${explanation}</div>
       </div>
     </div>
     <button class="btn-next" id="continueBtn" onclick="nextQuestion()">
@@ -677,14 +611,13 @@ async function showFeedback(correct, explanation) {
   area.appendChild(bar);
   bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
-  // Mascot typing indicator
   const bubble = document.getElementById('mascotBubble');
-  if (bubble) bubble.innerHTML = '🦊 thinking...';
+  if (bubble) bubble.textContent = '🦊 thinking...';
 
   const q = algebraQuestions[questionIndex];
   const prompt = correct
-    ? `A middle school student just correctly answered this algebra question: "${q.equation}". The answer is ${q.answer}. Give an enthusiastic 3-4 sentence explanation that: (1) confirms why the answer is right, (2) walks through the solution step by step, (3) gives a helpful tip to remember this method. Use simple middle school language and 2 emojis.`
-    : `A middle school student got this algebra question wrong: "${q.equation}". The correct answer is ${q.answer}. Give a kind 3-4 sentence explanation that: (1) shows exactly how to solve it step by step, (2) explains the key concept they missed, (3) gives a memory tip so they don't make the same mistake again. Be encouraging and use 2 emojis.`;
+    ? `A middle school student correctly answered: "${q.equation}". Answer: ${q.answer}. Give an enthusiastic 3-4 sentence explanation: (1) why it's correct, (2) step-by-step solution, (3) a memory tip. Simple language, 2 emojis.`
+    : `A middle school student got wrong: "${q.equation}". Correct answer: ${q.answer}. Give a kind 3-4 sentence explanation: (1) step-by-step solution, (2) key concept missed, (3) memory tip. Encouraging, 2 emojis.`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -696,50 +629,20 @@ async function showFeedback(correct, explanation) {
         messages: [{ role: 'user', content: prompt }]
       })
     });
+    if (!response.ok) throw new Error('API error');
     const data = await response.json();
-    const text = data.content?.[0]?.text || explanation;
-    if (bubble) {
+    const text = data?.content?.[0]?.text;
+    if (text && bubble) {
       bubble.textContent = text;
       bubble.classList.add('bubble-pop');
       setTimeout(() => bubble.classList.remove('bubble-pop'), 600);
     }
+    const explainEl = document.getElementById('feedbackExplain');
+    if (text && explainEl) explainEl.textContent = text;
   } catch (e) {
     if (bubble) bubble.textContent = correct ? '✅ ' + explanation : '❌ ' + explanation;
   }
 }
-
-  // Mascot shows typing indicator
-  const bubble = document.getElementById('mascotBubble');
-  if (bubble) {
-    bubble.innerHTML = '<span class="typing">🦊 thinking</span>';
-  }
-
-  // Get AI explanation
-  const q = algebraQuestions[questionIndex];
-  const prompt = correct
-    ? `A middle school student just correctly answered this algebra question: "${q.equation}". The answer is ${q.answer}. Give a fun, encouraging 1-2 sentence explanation of WHY this is correct, in simple terms. Be enthusiastic and use 1 emoji.`
-    : `A middle school student got this algebra question wrong: "${q.equation}". The correct answer is ${q.answer}. Give a simple, kind 1-2 sentence explanation of how to solve it step by step. Use 1 emoji. Be encouraging, not discouraging.`;
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await response.json();
-    const text = data.content?.[0]?.text || explanation;
-    if (bubble) {
-      bubble.textContent = text;
-      bubble.classList.add('bubble-pop');
-      setTimeout(() => bubble.classList.remove('bubble-pop'), 600);
-    }
-  } catch (e) {
-    if (bubble) bubble.textContent = correct ? '✅ ' + explanation : '❌ ' + explanation;
-  }
 
 function nextQuestion() {
   questionIndex++;
@@ -748,13 +651,12 @@ function nextQuestion() {
   if (hearts <= 0) { showGameOver(); return; }
   loadQuestion();
 }
+
 // ── Hearts ────────────────────────────────
 function loseHeart() {
   hearts = Math.max(0, hearts - 1);
-  const display = document.getElementById('heartsDisplay');
-  display.textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3 - hearts);
-  display.classList.add('heart-shake');
-  setTimeout(() => display.classList.remove('heart-shake'), 400);
+  const display = document.getElementById('heartStat');
+  if (display) display.textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3 - hearts);
 }
 
 // ── Game over ─────────────────────────────
@@ -792,29 +694,23 @@ function showResult() {
     </div>
   `;
 }
-// ── Mascot messages ───────────────────────
+
+// ── Mascot ────────────────────────────────
 function setMascot(mood) {
   const mascot = document.getElementById('mascot');
   const bubble = document.getElementById('mascotBubble');
   if (!mascot || !bubble) return;
-
   const moods = {
-    idle:    { face: '🦊', msg: "Take your time! You've got this! 💪" },
-    correct: { face: '🦊', msg: ['Amazing! 🎉', 'You\'re on fire! 🔥', 'Nailed it! ⭐', 'Brilliant! 🏆'][Math.floor(Math.random()*4)] },
-    wrong:   { face: '🦊', msg: ['Keep trying! 💙', 'Almost there!', 'Don\'t give up! 💪', 'You\'ll get the next one!'][Math.floor(Math.random()*4)] },
-    hint:    { face: '🦊', msg: "Here's a hint to help you out! 🔍" },
-    finish:  { face: '🦊', msg: 'Incredible work! Realm complete! 🏆' }
+    idle:    "Take your time! You've got this! 💪",
+    correct: ['Amazing! 🎉', "You're on fire! 🔥", 'Nailed it! ⭐', 'Brilliant! 🏆'][Math.floor(Math.random()*4)],
+    wrong:   ['Keep trying! 💙', 'Almost there!', "Don't give up! 💪", "You'll get the next one!"][Math.floor(Math.random()*4)],
+    hint:    "Here's a hint to help you out! 🔍",
+    finish:  'Incredible work! Realm complete! 🏆'
   };
-
-  const m = moods[mood] || moods.idle;
-  mascot.textContent = m.face;
   mascot.classList.add('mascot-bounce');
-  bubble.textContent = m.msg;
+  bubble.textContent = moods[mood] || moods.idle;
   bubble.classList.add('bubble-pop');
-  setTimeout(() => {
-    mascot.classList.remove('mascot-bounce');
-    bubble.classList.remove('bubble-pop');
-  }, 600);
+  setTimeout(() => { mascot.classList.remove('mascot-bounce'); bubble.classList.remove('bubble-pop'); }, 600);
 }
 
 // ── Confetti ──────────────────────────────
@@ -823,27 +719,15 @@ function launchConfetti() {
   for (let i = 0; i < 60; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
-    el.style.cssText = `
-      left: ${Math.random() * 100}vw;
-      background: ${colors[Math.floor(Math.random() * colors.length)]};
-      animation-duration: ${0.8 + Math.random() * 1.2}s;
-      animation-delay: ${Math.random() * 0.4}s;
-      width: ${6 + Math.random() * 8}px;
-      height: ${6 + Math.random() * 8}px;
-      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
-    `;
+    el.style.cssText = `left:${Math.random()*100}vw; background:${colors[Math.floor(Math.random()*colors.length)]}; animation-duration:${0.8+Math.random()*1.2}s; animation-delay:${Math.random()*0.4}s; width:${6+Math.random()*8}px; height:${6+Math.random()*8}px; border-radius:${Math.random()>0.5?'50%':'2px'};`;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 2000);
   }
 }
 
-// ── Streak update ─────────────────────────
+// ── Streak ────────────────────────────────
 function updateStreak(correct) {
-  if (correct) {
-    window.lessonStreak++;
-  } else {
-    window.lessonStreak = 0;
-  }
+  window.lessonStreak = correct ? window.lessonStreak + 1 : 0;
   const el = document.getElementById('streakCount');
   if (el) {
     el.textContent = window.lessonStreak;
@@ -851,7 +735,7 @@ function updateStreak(correct) {
   }
 }
 
-// ── Gem update ────────────────────────────
+// ── Gems ──────────────────────────────────
 function updateGems(amount) {
   window.lessonGems = Math.max(0, window.lessonGems + amount);
   const el = document.getElementById('gemCount');
@@ -861,26 +745,22 @@ function updateGems(amount) {
 // ── Hint ──────────────────────────────────
 function useHint() {
   if (window.lessonGems < 5) {
-    setMascot('hint');
-    document.getElementById('mascotBubble').textContent = "Not enough gems! 😢 Keep answering correctly to earn more!";
+    const bubble = document.getElementById('mascotBubble');
+    if (bubble) bubble.textContent = "Not enough gems! 😢 Keep answering correctly to earn more!";
     return;
   }
   updateGems(-5);
-  setMascot('hint');
-
   const q = algebraQuestions[questionIndex];
   const hints = {
-    mcq:    `Try working backwards — substitute each option in and see which one balances the equation.`,
-    fillin: `Isolate x by doing the opposite operation to both sides.`,
-    drag:   `Start with the original equation at the top, and end with the value of x at the bottom.`
+    mcq:    'Try working backwards — substitute each option in and see which one balances the equation.',
+    fillin: 'Isolate x by doing the opposite operation to both sides.',
+    drag:   'Start with the original equation at the top, and end with the value of x at the bottom.'
   };
-  document.getElementById('mascotBubble').textContent = '💡 ' + (hints[q.type] || 'Think step by step!');
+  const bubble = document.getElementById('mascotBubble');
+  if (bubble) bubble.textContent = '💡 ' + (hints[q.type] || 'Think step by step!');
 }
-function logOut() {
-  localStorage.removeItem('mq_session');
-  currentUser = null;
-  renderAuth('login');
-}
+
+// ── Init ──────────────────────────────────
 const savedSession = localStorage.getItem('mq_session');
 if (savedSession) {
   currentUser = JSON.parse(savedSession);
