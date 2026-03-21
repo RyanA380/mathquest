@@ -27,16 +27,19 @@ function playCorrect() {
 
 function playWrong() {
   const ctx = getAudioCtx();
-  const osc  = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value = 220;
-  osc.type = 'sawtooth';
-  gain.gain.setValueAtTime(0.2, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.4);
+  const freqs = [330, 280];
+  freqs.forEach((freq, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.2);
+    osc.start(ctx.currentTime + i * 0.15);
+    osc.stop(ctx.currentTime + i * 0.15 + 0.2);
+  });
 }
 
 function playComplete() {
@@ -653,10 +656,12 @@ function checkDrag() {
 }
 
 // ── Feedback ──────────────────────────────
-function showFeedback(correct, explanation) {
+async function showFeedback(correct, explanation) {
   const area = document.getElementById('questionArea');
   const existing = document.getElementById('feedbackBar');
   if (existing) existing.remove();
+
+  // Show feedback bar immediately
   const bar = document.createElement('div');
   bar.id = 'feedbackBar';
   bar.className = `feedback-bar ${correct ? 'fb-correct' : 'fb-wrong'}`;
@@ -674,6 +679,39 @@ function showFeedback(correct, explanation) {
   `;
   area.appendChild(bar);
   bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  // Mascot shows typing indicator
+  const bubble = document.getElementById('mascotBubble');
+  if (bubble) {
+    bubble.innerHTML = '<span class="typing">🦊 thinking</span>';
+  }
+
+  // Get AI explanation
+  const q = algebraQuestions[questionIndex];
+  const prompt = correct
+    ? `A middle school student just correctly answered this algebra question: "${q.equation}". The answer is ${q.answer}. Give a fun, encouraging 1-2 sentence explanation of WHY this is correct, in simple terms. Be enthusiastic and use 1 emoji.`
+    : `A middle school student got this algebra question wrong: "${q.equation}". The correct answer is ${q.answer}. Give a simple, kind 1-2 sentence explanation of how to solve it step by step. Use 1 emoji. Be encouraging, not discouraging.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || explanation;
+    if (bubble) {
+      bubble.textContent = text;
+      bubble.classList.add('bubble-pop');
+      setTimeout(() => bubble.classList.remove('bubble-pop'), 600);
+    }
+  } catch (e) {
+    if (bubble) bubble.textContent = correct ? '✅ ' + explanation : '❌ ' + explanation;
+  }
 }
 
 function nextQuestion() {
