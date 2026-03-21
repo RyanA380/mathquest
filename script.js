@@ -334,22 +334,51 @@ function showAlgebra() {
   score = 0;
   questionIndex = 0;
   hearts = 3;
+  let lessonStreak = 0;
+  let gems = Object.values(stars).reduce((a, b) => a + b, 0) * 10;
 
   document.getElementById('app').innerHTML = `
-    <div class="card realm-page">
-      <div class="duo-topbar">
+    <div class="lesson-shell">
+
+      <!-- Top bar -->
+      <div class="lesson-topbar">
         <button class="btn-back" onclick="renderHome()">✕</button>
         <div class="duo-progress-wrap">
           <div class="duo-progress-bg">
             <div class="duo-progress-fill" id="progressFill" style="width:0%"></div>
           </div>
         </div>
-        <div class="duo-hearts" id="heartsDisplay">❤️❤️❤️</div>
+        <div class="lesson-stats">
+          <div class="lesson-stat" id="streakStat">🔥 <span id="streakCount">0</span></div>
+          <div class="lesson-stat" id="gemStat">💎 <span id="gemCount">${gems}</span></div>
+          <div class="lesson-stat" id="heartStat">❤️❤️❤️</div>
+        </div>
       </div>
-      <div id="questionArea"></div>
+
+      <!-- Main area -->
+      <div class="lesson-body">
+
+        <!-- Mascot -->
+        <div class="mascot-wrap">
+          <div class="mascot" id="mascot">🦊</div>
+          <div class="mascot-bubble" id="mascotBubble">Let's solve some algebra! You got this! 💪</div>
+        </div>
+
+        <!-- Question -->
+        <div class="lesson-question" id="questionArea"></div>
+
+      </div>
+
+      <!-- Hint button -->
+      <div class="hint-wrap">
+        <button class="btn-hint" onclick="useHint()" id="hintBtn">💡 Hint (costs 5 💎)</button>
+      </div>
+
     </div>
   `;
 
+  window.lessonStreak = 0;
+  window.lessonGems = gems;
   loadQuestion();
 }
 
@@ -452,21 +481,81 @@ function checkMCQ(btn, selected, correct, explanation) {
 }
 
 // ── Fill in the blank ─────────────────────
-function renderFillin(q, area) {
-  area.innerHTML = `
-    <div class="duo-question">
-      <div class="duo-label">Fill in the blank</div>
-      <div class="duo-equation">${q.equation}</div>
-      <input id="fillInput" class="fill-input" type="number" placeholder="Type your answer...">
-      <button class="btn-check" id="checkBtn" onclick="checkFillin('${q.answer}', '${q.explanation}')">Check ✅</button>
-    </div>
-  `;
-  document.getElementById('fillInput').focus();
-  document.getElementById('fillInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') checkFillin(q.answer, q.explanation);
-  });
+function checkMCQ(btn, selected, correct, explanation) {
+  const allBtns = document.querySelectorAll('.mcq-tile');
+  allBtns.forEach(b => b.disabled = true);
+  if (selected === correct) {
+    btn.classList.add('correct');
+    score++;
+    playCorrect();
+    launchConfetti();
+    updateStreak(true);
+    updateGems(10);
+    setMascot('correct');
+    showFeedback(true, explanation);
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach(b => { if (b.textContent.trim() === correct) b.classList.add('correct'); });
+    playWrong();
+    loseHeart();
+    updateStreak(false);
+    setMascot('wrong');
+    showFeedback(false, explanation);
+  }
 }
 
+function checkFillin(correct, explanation) {
+  const input = document.getElementById('fillInput');
+  const val = input.value.trim();
+  if (!val) return;
+  input.disabled = true;
+  document.getElementById('checkBtn').disabled = true;
+  if (val === correct) {
+    input.classList.add('input-correct');
+    score++;
+    playCorrect();
+    launchConfetti();
+    updateStreak(true);
+    updateGems(10);
+    setMascot('correct');
+    showFeedback(true, explanation);
+  } else {
+    input.classList.add('input-wrong');
+    input.value = `✗  Answer: ${correct}`;
+    playWrong();
+    loseHeart();
+    updateStreak(false);
+    setMascot('wrong');
+    showFeedback(false, explanation);
+  }
+}
+
+function checkDrag() {
+  const correct = window.currentDragAnswer;
+  const explanation = window.currentDragExplanation;
+  const tiles = [...document.querySelectorAll('.drag-tile')];
+  const userOrder = tiles.map(t => t.dataset.text);
+  const isCorrect = JSON.stringify(userOrder) === JSON.stringify(correct);
+  tiles.forEach((t, i) => {
+    t.classList.add(t.dataset.text === correct[i] ? 'correct' : 'wrong');
+  });
+  document.getElementById('checkBtn').disabled = true;
+  if (isCorrect) {
+    score++;
+    playCorrect();
+    launchConfetti();
+    updateStreak(true);
+    updateGems(10);
+    setMascot('correct');
+    showFeedback(true, explanation);
+  } else {
+    playWrong();
+    loseHeart();
+    updateStreak(false);
+    setMascot('wrong');
+    showFeedback(false, explanation);
+  }
+}
 function checkFillin(correct, explanation) {
   const input = document.getElementById('fillInput');
   const val = input.value.trim();
@@ -620,6 +709,8 @@ function showGameOver() {
 // ── Result ────────────────────────────────
 function showResult() {
   playComplete();
+  setMascot('finish');
+  launchConfetti();
   document.getElementById('progressFill').style.width = '100%';
   const total = algebraQuestions.length;
   const earned = score >= total ? 3 : score >= total * 0.6 ? 2 : score >= 1 ? 1 : 0;
@@ -636,5 +727,88 @@ function showResult() {
     </div>
   `;
 }
+// ── Mascot messages ───────────────────────
+function setMascot(mood) {
+  const mascot = document.getElementById('mascot');
+  const bubble = document.getElementById('mascotBubble');
+  if (!mascot || !bubble) return;
 
+  const moods = {
+    idle:    { face: '🦊', msg: "Take your time! You've got this! 💪" },
+    correct: { face: '🦊', msg: ['Amazing! 🎉', 'You\'re on fire! 🔥', 'Nailed it! ⭐', 'Brilliant! 🏆'][Math.floor(Math.random()*4)] },
+    wrong:   { face: '🦊', msg: ['Keep trying! 💙', 'Almost there!', 'Don\'t give up! 💪', 'You\'ll get the next one!'][Math.floor(Math.random()*4)] },
+    hint:    { face: '🦊', msg: "Here's a hint to help you out! 🔍" },
+    finish:  { face: '🦊', msg: 'Incredible work! Realm complete! 🏆' }
+  };
+
+  const m = moods[mood] || moods.idle;
+  mascot.textContent = m.face;
+  mascot.classList.add('mascot-bounce');
+  bubble.textContent = m.msg;
+  bubble.classList.add('bubble-pop');
+  setTimeout(() => {
+    mascot.classList.remove('mascot-bounce');
+    bubble.classList.remove('bubble-pop');
+  }, 600);
+}
+
+// ── Confetti ──────────────────────────────
+function launchConfetti() {
+  const colors = ['#22c55e','#3b82f6','#fbbf24','#f87171','#a78bfa','#34d399'];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left: ${Math.random() * 100}vw;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      animation-duration: ${0.8 + Math.random() * 1.2}s;
+      animation-delay: ${Math.random() * 0.4}s;
+      width: ${6 + Math.random() * 8}px;
+      height: ${6 + Math.random() * 8}px;
+      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
+
+// ── Streak update ─────────────────────────
+function updateStreak(correct) {
+  if (correct) {
+    window.lessonStreak++;
+  } else {
+    window.lessonStreak = 0;
+  }
+  const el = document.getElementById('streakCount');
+  if (el) {
+    el.textContent = window.lessonStreak;
+    el.parentElement.classList.toggle('streak-hot', window.lessonStreak >= 3);
+  }
+}
+
+// ── Gem update ────────────────────────────
+function updateGems(amount) {
+  window.lessonGems = Math.max(0, window.lessonGems + amount);
+  const el = document.getElementById('gemCount');
+  if (el) el.textContent = window.lessonGems;
+}
+
+// ── Hint ──────────────────────────────────
+function useHint() {
+  if (window.lessonGems < 5) {
+    setMascot('hint');
+    document.getElementById('mascotBubble').textContent = "Not enough gems! 😢 Keep answering correctly to earn more!";
+    return;
+  }
+  updateGems(-5);
+  setMascot('hint');
+
+  const q = algebraQuestions[questionIndex];
+  const hints = {
+    mcq:    `Try working backwards — substitute each option in and see which one balances the equation.`,
+    fillin: `Isolate x by doing the opposite operation to both sides.`,
+    drag:   `Start with the original equation at the top, and end with the value of x at the bottom.`
+  };
+  document.getElementById('mascotBubble').textContent = '💡 ' + (hints[q.type] || 'Think step by step!');
+}
 renderAuth('login');
