@@ -1,3 +1,61 @@
+// ── Sounds ────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+
+function playCorrect() {
+  const ctx = getAudioCtx();
+  const times = [0, 0.15, 0.3];
+  const freqs = [523, 659, 784];
+  times.forEach((t, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freqs[i];
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime + t);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.3);
+    osc.start(ctx.currentTime + t);
+    osc.stop(ctx.currentTime + t + 0.3);
+  });
+}
+
+function playWrong() {
+  const ctx = getAudioCtx();
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = 220;
+  osc.type = 'sawtooth';
+  gain.gain.setValueAtTime(0.2, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.4);
+}
+
+function playComplete() {
+  const ctx = getAudioCtx();
+  const melody = [523, 587, 659, 698, 784];
+  melody.forEach((freq, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.3);
+    osc.start(ctx.currentTime + i * 0.12);
+    osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+  });
+}
+
 // ── Auth ──────────────────────────────────
 let currentUser = null;
 
@@ -454,10 +512,12 @@ function checkMCQ(btn, selected, correct, explanation) {
   if (selected === correct) {
     btn.classList.add('correct');
     score++;
+    playCorrect();
     showFeedback(true, explanation);
   } else {
     btn.classList.add('wrong');
     allBtns.forEach(b => { if (b.textContent.trim() === correct) b.classList.add('correct'); });
+    playWrong();
     loseHeart();
     showFeedback(false, explanation);
   }
@@ -490,10 +550,12 @@ function checkFillin(correct, explanation) {
   if (val === correct) {
     input.classList.add('input-correct');
     score++;
+    playCorrect();
     showFeedback(true, explanation);
   } else {
     input.classList.add('input-wrong');
-    input.value = correct;
+    input.value = `✗  Answer: ${correct}`;
+    playWrong();
     loseHeart();
     showFeedback(false, explanation);
   }
@@ -568,14 +630,15 @@ function checkDrag() {
 
   document.getElementById('checkBtn').disabled = true;
 
-  if (isCorrect) {
+if (isCorrect) {
     score++;
+    playCorrect();
     showFeedback(true, explanation);
   } else {
+    playWrong();
     loseHeart();
     showFeedback(false, explanation);
   }
-}
 
 /* ── Feedback bar ─────────────────────── */
 function showFeedback(correct, explanation) {
@@ -633,6 +696,10 @@ function showGameOver() {
 
 /* ── Result ───────────────────────────── */
 function showResult() {
+  function showResult() {
+  playComplete();
+  document.getElementById('progressFill').style.width = '100%';
+  // ... rest stays the same
   document.getElementById('progressFill').style.width = '100%';
   const total = algebraQuestions.length;
   const earned = score >= total ? 3 : score >= total * 0.6 ? 2 : score >= 1 ? 1 : 0;
