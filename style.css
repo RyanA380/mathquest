@@ -733,3 +733,16 @@ body.light .path-connector { background: #e2e8f0; }
 }
 
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+/* ── Typing indicator ─────────────────── */
+.typing::after {
+  content: '...';
+  animation: typing 1.2s infinite;
+}
+
+@keyframes typing {
+  0%   { content: '.'; }
+  33%  { content: '..'; }
+  66%  { content: '...'; }
+  100% { content: '.'; }
+}
