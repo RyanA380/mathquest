@@ -661,7 +661,6 @@ async function showFeedback(correct, explanation) {
   const existing = document.getElementById('feedbackBar');
   if (existing) existing.remove();
 
-  // Show feedback bar immediately
   const bar = document.createElement('div');
   bar.id = 'feedbackBar';
   bar.className = `feedback-bar ${correct ? 'fb-correct' : 'fb-wrong'}`;
@@ -673,12 +672,43 @@ async function showFeedback(correct, explanation) {
         <div class="fb-explain">${explanation}</div>
       </div>
     </div>
-    <button class="btn-next" onclick="nextQuestion()">
+    <button class="btn-next" id="continueBtn" onclick="nextQuestion()">
       ${questionIndex + 1 >= algebraQuestions.length ? 'Finish 🏁' : 'Continue →'}
     </button>
   `;
   area.appendChild(bar);
   bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  // Mascot typing indicator
+  const bubble = document.getElementById('mascotBubble');
+  if (bubble) bubble.innerHTML = '🦊 thinking...';
+
+  const q = algebraQuestions[questionIndex];
+  const prompt = correct
+    ? `A middle school student just correctly answered this algebra question: "${q.equation}". The answer is ${q.answer}. Give an enthusiastic 3-4 sentence explanation that: (1) confirms why the answer is right, (2) walks through the solution step by step, (3) gives a helpful tip to remember this method. Use simple middle school language and 2 emojis.`
+    : `A middle school student got this algebra question wrong: "${q.equation}". The correct answer is ${q.answer}. Give a kind 3-4 sentence explanation that: (1) shows exactly how to solve it step by step, (2) explains the key concept they missed, (3) gives a memory tip so they don't make the same mistake again. Be encouraging and use 2 emojis.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || explanation;
+    if (bubble) {
+      bubble.textContent = text;
+      bubble.classList.add('bubble-pop');
+      setTimeout(() => bubble.classList.remove('bubble-pop'), 600);
+    }
+  } catch (e) {
+    if (bubble) bubble.textContent = correct ? '✅ ' + explanation : '❌ ' + explanation;
+  }
+}
 
   // Mascot shows typing indicator
   const bubble = document.getElementById('mascotBubble');
@@ -716,11 +746,11 @@ async function showFeedback(correct, explanation) {
 
 function nextQuestion() {
   questionIndex++;
-  document.getElementById('feedbackBar')?.remove();
+  const bar = document.getElementById('feedbackBar');
+  if (bar) bar.remove();
   if (hearts <= 0) { showGameOver(); return; }
   loadQuestion();
 }
-
 // ── Hearts ────────────────────────────────
 function loseHeart() {
   hearts = Math.max(0, hearts - 1);
