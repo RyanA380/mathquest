@@ -495,9 +495,16 @@ body {
 /* ── Bigger realm bubbles ─────────────── */
 .realm-bubble {
   width: 100%;
-  max-width: 580px;
+  max-width: 100%;
 }
 
+.realm-path {
+  width: 100%;
+}
+
+.path-step {
+  width: 100%;
+}
 .bubble-icon {
   width: 64px;
   height: 64px;
