@@ -587,8 +587,7 @@ function checkDrag() {
   }
 }
 
-// ── Feedback ──────────────────────────────
-async function showFeedback(correct, explanation) {
+function showFeedback(correct, explanation) {
   const area = document.getElementById('questionArea');
   const existing = document.getElementById('feedbackBar');
   if (existing) existing.remove();
@@ -601,7 +600,7 @@ async function showFeedback(correct, explanation) {
       <span class="fb-icon">${correct ? '✅' : '❌'}</span>
       <div>
         <div class="fb-title">${correct ? 'Correct!' : 'Not quite!'}</div>
-        <div class="fb-explain" id="feedbackExplain">${explanation}</div>
+        <div class="fb-explain">${explanation}</div>
       </div>
     </div>
     <button class="btn-next" id="continueBtn" onclick="nextQuestion()">
@@ -612,36 +611,48 @@ async function showFeedback(correct, explanation) {
   bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
   const bubble = document.getElementById('mascotBubble');
-  if (bubble) bubble.textContent = '🦊 thinking...';
-
-  const q = algebraQuestions[questionIndex];
-  const prompt = correct
-    ? `A middle school student correctly answered: "${q.equation}". Answer: ${q.answer}. Give an enthusiastic 3-4 sentence explanation: (1) why it's correct, (2) step-by-step solution, (3) a memory tip. Simple language, 2 emojis.`
-    : `A middle school student got wrong: "${q.equation}". Correct answer: ${q.answer}. Give a kind 3-4 sentence explanation: (1) step-by-step solution, (2) key concept missed, (3) memory tip. Encouraging, 2 emojis.`;
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    if (!response.ok) throw new Error('API error');
-    const data = await response.json();
-    const text = data?.content?.[0]?.text;
-    if (text && bubble) {
-      bubble.textContent = text;
-      bubble.classList.add('bubble-pop');
-      setTimeout(() => bubble.classList.remove('bubble-pop'), 600);
-    }
-    const explainEl = document.getElementById('feedbackExplain');
-    if (text && explainEl) explainEl.textContent = text;
-  } catch (e) {
-    if (bubble) bubble.textContent = correct ? '✅ ' + explanation : '❌ ' + explanation;
+  if (bubble) {
+    bubble.textContent = getMascotExplanation(correct, algebraQuestions[questionIndex]);
+    bubble.classList.add('bubble-pop');
+    setTimeout(() => bubble.classList.remove('bubble-pop'), 600);
   }
+}
+
+function getMascotExplanation(correct, q) {
+  const explanations = {
+    '2x + 3 = 11': {
+      correct: "Great job! 🎉 You subtracted 3 from both sides to get 2x = 8, then divided by 2 to find x = 4. Always do the same thing to both sides!",
+      wrong:   "No worries! 💪 Start by subtracting 3 from both sides: 2x = 8. Then divide both sides by 2 to get x = 4. Remember — whatever you do to one side, do to the other!"
+    },
+    '3x = 15': {
+      correct: "Nailed it! ⭐ When x is multiplied by a number, you divide both sides by that number. 15 ÷ 3 = 5, so x = 5!",
+      wrong:   "Almost! 💙 When you see 3x = 15, ask yourself: what divided by 3 gives 15? Divide both sides by 3 to isolate x. 15 ÷ 3 = 5!"
+    },
+    'x ÷ 4 = 9, so x = ___': {
+      correct: "Amazing! 🏆 When x is divided by 4, you multiply both sides by 4 to undo it. 9 × 4 = 36, so x = 36!",
+      wrong:   "Let's try again! 💡 If x ÷ 4 = 9, you need to multiply both sides by 4 to get x alone. 9 × 4 = 36. Division and multiplication are opposites!"
+    },
+    '5x − 10 = 20': {
+      correct: "You're on fire! 🔥 First add 10 to both sides to get 5x = 30, then divide by 5 to get x = 6. Perfect two-step solving!",
+      wrong:   "Good try! 💪 This is a two-step problem. First add 10 to both sides: 5x = 30. Then divide both sides by 5: x = 6. Take it one step at a time!"
+    },
+    '2x + 6 = 14': {
+      correct: "Brilliant! 🎉 You subtracted 6 first to get 2x = 8, then divided by 2 to get x = 4. Two steps, perfectly done!",
+      wrong:   "No worries! 💙 Step 1: subtract 6 from both sides to get 2x = 8. Step 2: divide both sides by 2 to get x = 4. Always undo addition before division!"
+    },
+    '3x + 7 = 22, so x = ___': {
+      correct: "Incredible! ⭐ You subtracted 7 to get 3x = 15, then divided by 3 to get x = 5. You're mastering two-step equations!",
+      wrong:   "Keep going! 💡 First subtract 7 from both sides: 3x = 15. Then divide both sides by 3: x = 5. Remember — undo addition first, then division!"
+    }
+  };
+
+  const key = q.equation;
+  if (explanations[key]) {
+    return correct ? explanations[key].correct : explanations[key].wrong;
+  }
+  return correct
+    ? "Great work! 🎉 You applied the right steps to solve for x!"
+    : "Keep trying! 💪 Remember to do the same operation to both sides of the equation!";
 }
 
 function nextQuestion() {
